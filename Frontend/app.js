@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { VotingSystem } from "../../Classes/VotingSystem.js";
-import { Voter,Admin } from "../../Classes/User.js";
+import { VotingSystem } from "../Classes/VotingSystem.js";
+import { Voter,Admin } from "../Classes/User.js";
 const vs = new VotingSystem();
 await vs.init();
 

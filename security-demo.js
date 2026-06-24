@@ -1,4 +1,4 @@
-import { VotingSystem } from '../Classes/VotingSystem.js';
+import { VotingSystem } from './Classes/VotingSystem.js';
 
 const vs = new VotingSystem();
 await vs.init();

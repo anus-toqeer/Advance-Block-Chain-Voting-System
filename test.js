@@ -1,4 +1,4 @@
-import { VotingSystem } from '../Classes/VotingSystem.js';
+import { VotingSystem } from './Classes/VotingSystem.js';
 
 async function test() {
     const vs = new VotingSystem();
