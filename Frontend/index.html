@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self'">
+    <title>Blockchain Voting System</title>
+</head>
+<body>
+
+    <section id="loginSection">
+        <div id="voterLoginForm" style="display:none">
+            <h2>Voter Login</h2>
+            <input type="text" id="loginId" placeholder="ID">
+            <input type="password" id="loginPassword" placeholder="Password">
+            <button id="loginBtn">Login</button>
+            <p id="loginError"></p>
+            <button id="showAdminLoginBtn">Login as Admin</button>
+        </div>
+    
+        <div id="adminLoginForm">
+            <h2>Admin Login</h2>
+            <input type="text" id="adminLoginId" placeholder="Admin ID">
+            <input type="password" id="adminLoginPassword" placeholder="Password">
+            <button id="adminLoginBtn">Login</button>
+            <p id="adminLoginError"></p>
+            <button id="showVoterLoginBtn">Back to Voter Login</button>
+        </div>
+    </section>
+
+    <!-- VOTER DASHBOARD -->
+    <section id="voterSection" style="display: none;">
+        <h2>Voter Dashboard</h2>
+        <div id="candidateList"></div>
+        <div id="voterResults"></div>
+        <button id="logoutBtnVoter">Logout</button>
+    </section>
+
+    <!-- ADMIN DASHBOARD -->
+    <section id="adminSection" style="display: none;">
+        <h2>Admin Dashboard</h2>
+
+        <h3>Register Voter</h3>
+        <input type="text" id="newVoterId" placeholder="Voter ID">
+        <input type="text" id="newVoterName" placeholder="Name">
+        <input type="password" id="newVoterPassword" placeholder="Password">
+        <button id="registerVoterBtn">Register</button>
+
+        <h3>Add Candidate</h3>
+        <input type="text" id="newCandidateId" placeholder="Candidate ID">
+        <input type="text" id="newCandidateName" placeholder="Candidate Name">
+        <button id="addCandidateBtn">Add Candidate</button>
+
+        <h3>Controls</h3>
+        <button id="startElectionBtn">Start Election</button>
+        <button id="closeElectionBtn">Close Election</button>
+        <button id="toggleSecurityBtn">Toggle Security</button>
+        <p id="securityStatus"></p>
+
+        <h3>Reports</h3>
+        <button id="viewResultsBtn">View Results</button>
+        <button id="viewBlockchainBtn">View Blockchain</button>
+        <button id="viewAuditLogBtn">View Audit Log</button>
+
+        <div id="adminOutput"></div>
+        <button id="logoutBtnAdmin">Logout</button>
+    </section>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
