@@ -16,53 +16,105 @@ export class VotingSystem {
         this.electionStarted = false;
 
     }
+    // Basic Utilities Functions
     async init() {
         const restored = this.loadState();
         if (!restored) {
             await this.blockchain.AddGenesisBlock();
-            this.users.set('admin1', new Admin('admin1', 'Admin', 'Admin123'));
+            this.users.set('Anas', new Admin('Anas', 'Anas', '1122'));
             this.saveState();
         }
     }
     registerVoter(id, name, password) {
-
         if (this.electionStarted && this.electionOpen)
             throw new Error('Cannot register voters while voting is in progress.');
-        if (!VotingSystem.isValidName(name)) throw new Error("Invalid Name");
+        if (this.users.has(id)) throw new Error("Voter ID already exists.");
+        if (!this.isValidName(name)) throw new Error("Invalid Name");
         const voter = new Voter(id, name, password);
         this.users.set(id, voter);
-        this.auditing.record(id, "Voter Registered");
+        this.auditing.record(id, `Voter ${name} Registered`);
         return voter;
     }
     addcandidate(id, name) {
         if (this.electionStarted && this.electionOpen)
             throw new Error('Cannot add candidates while voting is in progress.');
-        if (this.users.has(id)) throw new Error("Voter ID Already exits");
-        if (this.securityEnabled)
-            if (!VotingSystem.isValidName(name)) throw new Error('Invalid candidate name.');
+        if (this.candidates.some(c => c.id === id)) throw new Error("Candidate ID already exists.");
+        if (!this.isValidName(name)) throw new Error('Invalid candidate name.');
         this.candidates.push(new Candidate(id, name));
+        this.auditing.record(id, `Candidate ${name} Added`)
+    }
+    loginVulnerable(id, password) {
+        let match;
+        try {
+            match = [...this.users.values()].find(u =>
+                eval(`u.id === "${id}" && u.password === "${password}"`)
+            );
+        } catch (e) {
+            match = undefined;
+        }
+
+        // If eval() itself was hijacked into bypassing auth entirely
+        // (e.g. id = `" || true || "`), match might be the first user
+        // even without real credentials — that's fine, it's the bypass.
+
+        // Explicit classic injection pattern also triggers a full "breach" dump
+        if (id.includes("' OR '1'='1") || id.includes('" OR "1"="1') || id.includes("|| true ||")) {
+            this.auditing.record('UNKNOWN', 'SIMULATED SQL INJECTION — auth bypassed');
+            return this.dumpDatabase();
+        }
+
+        if (!match) {
+            this.auditing.record(id, 'Login Failed(Not-secure)');
+            throw new Error('Invalid ID or password.');
+        }
+
+        this.currentUser = match;
+        this.auditing.record(match.id, 'Login Successful(Not-Secure)');
+        return match;
+    }
+
+    dumpDatabase() {
+        return {
+            breached: true,
+            users: [...this.users.values()].map(u => ({ id: u.id, name: u.name, password: u.password })),
+            candidates: this.candidates
+        };
     }
     login(id, password) {
         const user = this.users.get(id);
-        if (!user || password != user.password) throw new Error("Invalid Id or Password");
+        if (!user) throw new Error("Invalid Id or Password");
         if (user.isLocked()) throw new Error('Account locked due to too many failed attempts.');
 
         if (password !== user.password) {
             user.incrementFailedAttempts();
+            this.auditing.record(id, "Login Failed");   // now actually runs
             throw new Error('Invalid ID or password.');
         }
+
         user.resetFailedAttempts();
         this.currentUser = user;
-        this.auditing.record(id, "Login Successfull");
+        this.auditing.record(id, "Login Successful(Secure)");
         return user;
     }
-    static isValidName(name) {
-        if (typeof name !== 'string') return false;
-        const trimmed = name.trim();
-        if (trimmed.length < 3 || trimmed.length > 30) return false;
-        if (!/^[A-Za-z\s]+$/.test(trimmed)) return false;
-        if (!/[A-Za-z]/.test(trimmed)) return false;
+    isValidName(name) {
+        if (this.securityEnabled) {
+            if (typeof name !== 'string') return false;
+            const trimmed = name.trim();
+            if (trimmed.length < 3 || trimmed.length > 30) return false;
+            if (!/^[A-Za-z\s]+$/.test(trimmed)) return false;
+            if (!/[A-Za-z]/.test(trimmed)) return false;
+        }
         return true;
+    }
+    changePassword(oldPassword, newPassword) {
+        if (!this.currentUser) throw new Error('You must be logged in.');
+        if (this.currentUser.password !== oldPassword) throw new Error('Current password is incorrect.');
+        if (newPassword === oldPassword) throw new Error('New password must be different.');
+        if (newPassword.length < 4) throw new Error('Password too short.');
+
+        this.currentUser.password = newPassword;
+        this.auditing.record(this.currentUser.id, 'Password Changed');
+        this.saveState();
     }
     startElection() {
         if (!(this.currentUser instanceof Admin)) throw new Error('Only admin can start the election.');
@@ -71,6 +123,8 @@ export class VotingSystem {
         this.saveState();
     }
     async castVote(id) {
+        if (!this.electionStarted) throw new Error("Voting has not started yet.");
+        if (!this.electionOpen) throw new Error("Voting is closed. No further votes can be cast.");
         if (!(this.currentUser instanceof Voter)) throw new Error("Voter ID Doesnot Exists");
         if (this.currentUser.hasVoted) throw new Error("Voter Already Voted");
         const VoterIdHash = await Block.hashValue(this.currentUser.id);
@@ -99,6 +153,36 @@ export class VotingSystem {
             return this.candidates.filter(c => eval(`c.name === "${query}"`));
             // eval() is a built-in JS function that takes a string and runs it as actual JavaScript code 
         }
+    }
+    simulateTamperAttack() {
+        if (!(this.currentUser instanceof Admin)) throw new Error('Only admin can run this demo.');
+        if (!this.blockchain.tail || !this.blockchain.tail.prev) {
+            throw new Error('Need at least one real vote cast before tampering can be demonstrated.');
+        }
+
+        // Tamper with the most recent real vote block, without recalculating its hash
+        this.blockchain.tail.candidateId = this.blockchain.tail.candidateId === 1 ? 2 : 1;
+        this.auditing.record(this.currentUser.id, 'SIMULATED ATTACK: Block tampered (candidateId flipped)');
+    }
+
+    // System Features
+    async resetSystem() {
+        if (!(this.currentUser instanceof Admin)) throw new Error('Only admin can reset the system.');
+
+        localStorage.removeItem('votingSystemState');
+
+        this.users = new Map();
+        this.candidates = [];
+        this.blockchain = new BlockChain();
+        this.electionOpen = true;
+        this.electionStarted = false;
+        this.securityEnabled = false;
+        this.auditing = new AuditLog();
+        this.currentUser = null;
+
+        await this.blockchain.AddGenesisBlock();
+        this.users.set('Anas', new Admin('Anas', 'Anas', '1122'));
+        this.saveState();
     }
     renderCandidates(container) {
         container.innerHTML = '';
@@ -207,4 +291,25 @@ export class VotingSystem {
 
         return true;
     }
+
+
+    removeVoter(id, adminPassword) {
+        if (!(this.currentUser instanceof Admin)) throw new Error('Only admin can remove voters.');
+        if (this.currentUser.password !== adminPassword) throw new Error('Incorrect admin password.');
+        if (!this.users.has(id)) throw new Error('Voter not found.');
+        this.users.delete(id);
+        this.auditing.record(this.currentUser.id, `Removed voter ${id}`);
+        this.saveState();
+    }
+
+    removeCandidate(id, adminPassword) {
+        if (!(this.currentUser instanceof Admin)) throw new Error('Only admin can remove candidates.');
+        if (this.currentUser.password !== adminPassword) throw new Error('Incorrect admin password.');
+        const index = this.candidates.findIndex(c => c.id === id);
+        if (index === -1) throw new Error('Candidate not found.');
+        this.candidates.splice(index, 1);
+        this.auditing.record(this.currentUser.id, `Removed candidate ${id}`);
+        this.saveState();
+    }
 }
+

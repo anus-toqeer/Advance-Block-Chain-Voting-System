@@ -1,0 +1,616 @@
+:root {
+    --bg: #0B0E14;
+    --panel: #131826;
+    --border: #232B3D;
+    --text: #E4E8F1;
+    --text-muted: #7C8699;
+    --accent: #3DDC97;
+    --danger: #FF5577;
+    --font-display: 'JetBrains Mono', monospace;
+    --font-body: 'Inter', system-ui, sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 20px 0;
+}
+.appBanner {
+    width: 100%;
+    text-align: center;
+    transition: all 0.9s ease;
+}
+.appBanner h1 {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    color: var(--accent);
+    letter-spacing: 0.03em;
+    text-align: center;
+}
+
+.appBanner p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 4px;
+    /* margin-bottom: 30px; */
+}
+.appBanner.compact {
+    /* position: fixed; */
+    top: 16px;
+    right: 24px;
+    text-align: right;
+    margin-bottom: 0;
+}
+
+.appBanner.compact h1 {
+    font-size: 1.5rem;
+    text-align: left;
+}
+
+.appBanner.compact p {
+    display: none; /* hide tagline in compact mode, keep just the name */
+}
+
+.pageWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    /* margin-top: 2%; */
+}
+#controlMsgs{
+    color: wheat;
+}
+#voterResultsMsg {
+    white-space: pre-line;
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    color: var(--accent);
+    margin-top: 12px;
+}
+
+.welcomeMsg {
+    color: wheat;
+    font-size: 0.95rem;
+    font-weight: 100px;
+    margin-bottom: 20px;
+
+}
+
+button {
+    transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+}
+button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+button:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: none;
+}
+#toggleSecurityBtn {
+    background-color: transparent;
+    color: var(--danger);
+    border-radius: 10px;
+    border : 2px solid var(--danger);
+}
+#voterStatusMsg {
+    color: var(--accent);
+    margin-bottom: 16px;
+    font-size: 0.95rem;
+}
+/* Primary action buttons (green) */
+#loginBtn:hover:not(:disabled),
+#adminLoginBtn:hover:not(:disabled),
+#candidateList button:hover:not(:disabled) {
+    background-color: #2fc787; /* darker green */
+}
+
+/* Outlined/secondary buttons */
+#showAdminLoginBtn:hover,
+#showVoterLoginBtn:hover,
+#logoutBtnVoter:hover {
+    background-color: var(--border);
+    color: var(--text);
+}
+/* LOGIN buttons — primary green */
+#loginBtn, #adminLoginBtn {
+    background-color: var(--accent);
+    color: var(--bg);
+    border: none;
+}
+#loginBtn:hover:not(:disabled), 
+#adminLoginBtn:hover:not(:disabled) {
+    background-color: #2fc787;
+}
+
+/* LOGOUT buttons — red-tinted outline */
+
+#logoutBtnAdmin, #logoutBtnVoter {
+    padding: 18px 32px;
+    font-size: 1rem;
+    background-color: transparent;
+    color: var(--danger);
+    border: 3px solid var(--danger);
+}
+#loginError {
+    white-space: pre-line;
+}
+#logoutBtnVoter:hover, #logoutBtnAdmin:hover {
+    background-color: var(--danger);
+    color: var(--bg);
+}
+
+/* "Switch form" buttons (Login as Admin / Back to Voter) — neutral outline */
+#showAdminLoginBtn, #showVoterLoginBtn {
+    background-color: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
+#showAdminLoginBtn:hover, #showVoterLoginBtn:hover {
+    background-color: var(--border);
+    color: var(--text);
+}
+button {
+    transition: all 0.15s ease;
+    cursor: pointer;
+    filter: brightness(1);
+}
+
+button:hover:not(:disabled) {
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(61, 220, 151, 0.15);
+}
+
+button:active:not(:disabled) {
+    filter: brightness(0.95);
+    transform: translateY(0);
+}
+
+h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: 0.02em;
+}
+
+#loginSection {
+    width: 100%;
+    max-width: 400px;
+    margin-top: 35px;
+}
+
+#voterLoginForm, #adminLoginForm {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px;
+}
+
+#voterLoginForm h2, #adminLoginForm h2 {
+    font-size: 1.4rem;
+    margin-bottom: 24px;
+    color: var(--accent);
+}
+
+#loginSection input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 4px;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+}
+
+#loginSection input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+#loginSection button {
+    width: 100%;
+    background: var(--accent);
+    color: #0B0E14;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 8px;
+}
+
+#loginSection button:hover {
+    opacity: 0.9;
+}
+
+#showAdminLoginBtn, #showVoterLoginBtn {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
+
+#loginError, #adminLoginError {
+    color: var(--danger);
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    min-height: 1em;
+}
+
+#voterSection {
+    width: 100%;
+    max-width: 600px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px;
+    margin-top: 30px;
+}
+
+#voterSection h2 {
+    font-size: 1.4rem;
+    color: var(--accent);
+    margin-bottom: 24px;
+}
+
+#candidateList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+#candidateList > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+}
+
+#candidateList span {
+    font-size: 1.05rem;
+}
+
+#candidateList button {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#candidateList button:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+#candidateList button:disabled {
+    background: var(--border);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+
+#adminSection {
+    width: 100%;
+    max-width: 1100px;
+    min-height: 100vh;
+    background: var(--bg);
+    padding: 30px;
+}
+
+#adminSection h2 {
+    text-align: center;
+    margin-bottom: 2%;
+    color: wheat;
+    
+}
+.adminGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.adminPanel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    width: 100%;
+}
+#adminSection h3 {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    margin-top: 24px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.adminPanel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 16px;
+    width: 100%;
+    max-width: 600px;
+}
+
+.adminPanel input {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    font-family: var(--font-body);
+}
+
+.adminPanel input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.adminPanel button {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 10px 18px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+#viewResult {
+    color: wheat;   
+}
+
+#auditMsg{
+    color: wheat;
+    
+    white-space: pre-line;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    margin-top: 12px;
+
+}
+/* Controls grid — buttons side by side, wraps on small screens */
+.controlsGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.controlsGrid button {
+    width: 50%;
+    text-align: left;
+}
+
+/* Destructive/risky actions — red-tinted */
+#resetSystemBtn, #tamperBtn {
+    border-color: var(--danger) !important;
+    color: var(--danger) !important;
+}
+#resetSystemBtn:hover, #tamperBtn:hover {
+    background-color: var(--danger) !important;
+    color: var(--bg) !important;
+}
+
+.fieldMsg { margin-top: 10px; font-size: 0.85rem; min-height: 1em; }
+.fieldMsg.success { color: var(--accent); }
+.fieldMsg.error { color: var(--danger); }
+
+/* Output panel — terminal-style readout */
+#adminOutput {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    margin-top: 16px;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    color: var(--accent);
+    white-space: pre-line;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#securityStatus {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 8px;
+}
+
+.bottomBar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 20px;
+}
+
+#togglePasswordPanel {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 18px 20px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+
+.blockchainView {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 20px 0;
+}
+
+.blockCard {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    min-width: 220px;
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+}
+
+.blockField {
+    margin-bottom: 6px;
+    word-break: break-all;
+}
+
+.blockField span {
+    color: var(--text-muted);
+}
+
+.blockConnector {
+    color: var(--accent);
+    font-size: 1.5rem;
+    padding: 0 4px;
+}
+
+.blockCard.tampered {
+    border-color: var(--danger);
+    box-shadow: 0 0 16px rgba(255, 85, 119, 0.4);
+}
+.auditRow {
+    margin-bottom: 4px;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+}
+.auditTime { color: red; }
+.auditUser { color: green; }
+.auditAction { color: wheat; }
+.tamperedTag {
+    color: var(--danger);
+    font-weight: 700;
+    margin-top: 8px;
+}
+
+@media (max-width: 900px) {
+    .adminGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 12px 12px 0;
+    }
+
+    .appBanner h1 {
+        font-size: 1.3rem;
+    }
+
+    .appBanner.compact {
+        position: static;
+        text-align: center;
+        margin-bottom: 16px;
+    }
+
+    #loginSection, #voterSection, #adminSection {
+        max-width: 100%;
+        padding: 20px;
+    }
+
+    .controlsGrid button {
+        font-size: 0.85rem;
+        padding: 10px;
+    }
+
+    .blockchainView {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .blockConnector {
+        text-align: center;
+        transform: rotate(90deg);
+    }
+
+    .bottomBar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #adminSection h2 {
+        text-align: center;
+    }
+}
+
+#viewResultsVoterBtn {
+    background: transparent;
+    color: var(--accent);
+    border : 3px solid var(--accent);
+    padding: 18px 15px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+#viewResultVoterMsg{
+    color: wheat;
+    white-space: pre-line;
+}
+
+.electionClosed {
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+.electionOpen {
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.removeRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0d1117;       /* match your dark card bg from candidate list */
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+}
+
+.removeRow span {
+    color: #ffffff;
+    font-size: 15px;
+}
+
+.removeRow button {
+    background: transparent;       /* match your green Vote button */
+    color: var(--danger);
+    border: 4px solid var(--danger);
+    border-radius: 10px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-weight: 500;
+    width: 25%;
+}
+
+.removeRow button:hover {
+    background: var(--danger);
+    color: black;
+}
+
+

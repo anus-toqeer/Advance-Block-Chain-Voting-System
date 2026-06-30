@@ -1,70 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self'">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline'">
+    <!-- <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval'"> -->
     <title>Blockchain Voting System</title>
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
 
-    <section id="loginSection">
-        <div id="voterLoginForm" style="display:none">
-            <h2>Voter Login</h2>
-            <input type="text" id="loginId" placeholder="ID">
-            <input type="password" id="loginPassword" placeholder="Password">
-            <button id="loginBtn">Login</button>
-            <p id="loginError"></p>
-            <button id="showAdminLoginBtn">Login as Admin</button>
-        </div>
-    
-        <div id="adminLoginForm">
-            <h2>Admin Login</h2>
-            <input type="text" id="adminLoginId" placeholder="Admin ID">
-            <input type="password" id="adminLoginPassword" placeholder="Password">
-            <button id="adminLoginBtn">Login</button>
-            <p id="adminLoginError"></p>
-            <button id="showVoterLoginBtn">Back to Voter Login</button>
-        </div>
-    </section>
+    <header class="appBanner" id="appBanner">
+        <h1>⛓ Blockchain Voting System</h1>
+        <p>Secure. Transparent. Tamper-Evident.</p>
+    </header>
+
+    <div class="pageWrapper">
+        <section id="loginSection">
+            <div id="voterLoginForm" style="display:none">
+                <h2 id="heading">Voter Login</h2>
+                <input type="text" id="loginId" placeholder="ID">
+                <input type="password" id="loginPassword" placeholder="Password">
+                <button id="loginBtn">Login</button>
+                <p id="loginError"></p>
+                <button id="showAdminLoginBtn">Login as Admin</button>
+            </div>
+
+            <div id="adminLoginForm">
+                <h2>Admin Login</h2>
+                <input type="text" id="adminLoginId" placeholder="Admin ID" list="nameSuggestions">
+                <datalist id="nameSuggestions"></datalist>
+                <input type="password" id="adminLoginPassword" placeholder="Password">
+                <button id="adminLoginBtn">Login</button>
+                <p id="adminLoginError"></p>
+                <button id="showVoterLoginBtn">Login as Voter</button>
+            </div>
+        </section>
+    </div>
 
     <!-- VOTER DASHBOARD -->
     <section id="voterSection" style="display: none;">
         <h2>Voter Dashboard</h2>
+        <p id="voterWelcomeMsg" class="welcomeMsg"></p>
+        <p id="electionStatusMsg"></p>
+        <p id="voterStatusMsg"></p>
+
         <div id="candidateList"></div>
-        <div id="voterResults"></div>
-        <button id="logoutBtnVoter">Logout</button>
+        <div class="bottom">
+             <button id="viewResultsVoterBtn">View Results</button>
+             <p id="viewResultVoterMsg"></p>
+             <button id="logoutBtnVoter">Logout</button>
+            </div>
+       
     </section>
 
     <!-- ADMIN DASHBOARD -->
     <section id="adminSection" style="display: none;">
         <h2>Admin Dashboard</h2>
+        <p id="adminWelcomeMsg" class="welcomeMsg"></p>
 
-        <h3>Register Voter</h3>
-        <input type="text" id="newVoterId" placeholder="Voter ID">
-        <input type="text" id="newVoterName" placeholder="Name">
-        <input type="password" id="newVoterPassword" placeholder="Password">
-        <button id="registerVoterBtn">Register</button>
+        <div class="adminGrid">
+            <div class="adminPanel">
+                <h3>Register Voter</h3>
+                <input type="text" id="newVoterId" placeholder="Voter ID">
+                <input type="text" id="newVoterName" placeholder="Name">
+                <input type="password" id="newVoterPassword" placeholder="Password">
+                <button id="registerVoterBtn">Register</button>
+                <p id="registerVoterMsg" class="fieldMsg"></p>
+            </div>
 
-        <h3>Add Candidate</h3>
-        <input type="text" id="newCandidateId" placeholder="Candidate ID">
-        <input type="text" id="newCandidateName" placeholder="Candidate Name">
-        <button id="addCandidateBtn">Add Candidate</button>
+            <div class="adminPanel">
+                <h3>Add Candidate</h3>
+                <input type="text" id="newCandidateId" placeholder="Candidate ID">
+                <input type="text" id="newCandidateName" placeholder="Candidate Name">
+                <button id="addCandidateBtn">Add Candidate</button>
+                <p id="addCandidateMsg" class="fieldMsg"></p>
+            </div>
 
-        <h3>Controls</h3>
-        <button id="startElectionBtn">Start Election</button>
-        <button id="closeElectionBtn">Close Election</button>
-        <button id="toggleSecurityBtn">Toggle Security</button>
-        <p id="securityStatus"></p>
+            <div class="adminPanel">
+                <h3>Reports</h3>
+                <div class="controlsGrid">
+                    <button id="viewResultsBtn">View Results</button>
+                    <p id="viewResult"></p>
+                    <button id="viewAuditLogBtn">View Audit Log</button>
+                    <p id="auditMsg"></p>
+                    <button id="viewBlockchainBtn">View Blockchain</button>
+                    <div id="blockchainView" class="blockchainView"></div>
 
-        <h3>Reports</h3>
-        <button id="viewResultsBtn">View Results</button>
-        <button id="viewBlockchainBtn">View Blockchain</button>
-        <button id="viewAuditLogBtn">View Audit Log</button>
+                </div>
+            </div>
 
-        <div id="adminOutput"></div>
-        <button id="logoutBtnAdmin">Logout</button>
+            <div class="adminPanel">
+                <h3>Controls</h3>
+                <div class="controlsGrid">
+                    <button id="toggleSecurityBtn">Toggle Security</button>
+                    <p  id='secMsg'></p>
+                    <button id="startElectionBtn">Start Election</button>
+                    <button id="closeElectionBtn">Close Election</button>
+                    <button id="removeVoter">Remove Voter</button>
+                    <div id="removeList"></div>
+                    <button id="removeCandidate">Remove Candidate</button>
+                    <div id="removeCandidateList"></div>
+                    <button id="verifyChainBtn">Verify Blockchain Integrity</button>
+                    <button id="tamperBtn">Simulate Tamper Attack</button>
+                    <button id="resetSystemBtn">Reset System</button>
+                    <p id="controlMsgs"></p>
+                </div>
+                <p id="securityStatus"></p>
+            </div>
+        </div>
+
+        <div class="bottomBar">
+            <button id="logoutBtnAdmin">Logout</button>
+            <button id="togglePasswordPanel">🔒 Change Password</button>
+        </div>
+        
+        <div id="passwordFields" class="adminPanel" style="display:none; max-width:400px;">
+            <input type="password" id="oldPassword" placeholder="Current Password">
+            <input type="password" id="newPassword" placeholder="New Password">
+            <button id="changePasswordBtn">Change Password</button>
+            <p id="Passmsg"></p>
+        </div>
     </section>
 
     <script type="module" src="app.js"></script>
 </body>
+
 </html>

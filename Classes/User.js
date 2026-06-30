@@ -24,6 +24,7 @@ export class Voter extends User {
         this.hasVoted = false;
         this.votedAt = null;
     }
+    
 }
 export class Admin extends User{
     constructor(id,name,password){
