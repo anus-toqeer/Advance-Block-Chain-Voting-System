@@ -36,6 +36,7 @@ export class VotingSystem {
     const voter = new Voter(id, name, hashed);      // ← store hash, not plaintext
     this.users.set(id, voter);
     this.auditing.record(id, `Voter ${name} Registered`);
+    this.saveState();
     return voter;
 }
     addcandidate(id, name) {
@@ -45,7 +46,9 @@ export class VotingSystem {
         if (!this.isValidName(name)) throw new Error('Invalid candidate name.');
         this.candidates.push(new Candidate(id, name));
         this.auditing.record(id, `Candidate ${name} Added`)
+        this.saveState();
     }
+
     async loginVulnerable(id, password) {
     const hashedPassword = await hashPassword(password);
     let match;
@@ -138,6 +141,7 @@ export class VotingSystem {
         this.currentUser.hasVoted = true;
         this.auditing.record(this.currentUser.id, "Vote Cast");
         this.currentUser.votedAt = new Date().toISOString();
+        this.saveState();
     }
     closeElection() {
         if (!(this.currentUser instanceof Admin)) throw new Error('Only admin can close the election.');

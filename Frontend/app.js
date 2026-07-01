@@ -135,8 +135,8 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
             updateVoterStatus();
             updateElectionStatus();
             document.getElementById('voterWelcomeMsg').textContent = `Logged in as Voter ${result.name}`;
-            id.value = '';
-            password.value = '';
+            document.getElementById('loginId').value = '';
+            document.getElementById('loginPassword').value = '';
         }
     } catch (e) {
         if (vs.securityEnabled) {
@@ -344,12 +344,13 @@ document.getElementById('viewResultsBtn').addEventListener('click', () => {
             msg.innerText = output;  // set plain text results first
 
             // then append winner as styled element
+            if(!vs.electionOpen){
             const win = document.createElement('span');
             win.textContent = `🏆 Winner: ${winner.name} with ${maxVotes} votes`;
             win.className = 'winnershow';
             win.style.color ='var(--accent)';
             msg.appendChild(win);
-
+            }
         } catch (e) {
             msg.innerText = e.message;
         }
@@ -375,6 +376,8 @@ document.getElementById('viewResultsVoterBtn').addEventListener('click', () => {
             const win = document.createElement('span');
             win.textContent = `🏆 Winner: ${winner.name} with ${maxVotes} votes`;
             win.className = 'winnershow';
+            win.style.background='transparent';
+            win.style.color ='var(--accent)';
             msg.appendChild(win);
 
         } catch (e) {
