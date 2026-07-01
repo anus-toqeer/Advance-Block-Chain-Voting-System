@@ -69,6 +69,8 @@ function logoutToVoterLogin() {
     loginSection.style.marginTop = '2%';
     document.getElementById('appBanner').classList.remove('compact');
     document.getElementById('viewResultVoterMsg').textContent = '';
+    document.getElementById('loginId').value = '';
+    document.getElementById('loginPassword').value = '';
     loginError.textContent = '';
     
 }
@@ -195,14 +197,14 @@ document.getElementById('showVoterLoginBtn').addEventListener('click', () => {
     document.getElementById('voterLoginForm').style.display = 'block';
 });
 
-document.getElementById('registerVoterBtn').addEventListener('click', () => {
+document.getElementById('registerVoterBtn').addEventListener('click',async () => {
     const id = document.getElementById('newVoterId').value;
     const name = document.getElementById('newVoterName').value;
     const password = document.getElementById('newVoterPassword').value;
     const msg = document.getElementById('registerVoterMsg');
 
     try {
-        vs.registerVoter(id, name, password);
+        await vs.registerVoter(id, name, password);
         msg.textContent = `Voter ${id} registered successfully.`;
         msg.className = 'fieldMsg success';
     } catch (e) {
@@ -324,41 +326,63 @@ document.getElementById('tamperBtn').addEventListener('click', () => {
         controlmsg.textContent = e.message;
     }
 });
-document.getElementById('viewResultsVoterBtn').addEventListener('click', () => {
-    const msg = document.getElementById('viewResultVoterMsg');
-    toggleOutput(msg, () => {
-        try {
-
-            let output = 'Results:\n';
-            const results = vs.getResults();
-            results.forEach((count, candidateId) => {
-                output += `Candidate ${candidateId}: ${count} Votes\n`;
-            });
-            msg.textContent = output;
-        } catch (e) {
-            msg.textContent = e.message;
-        }
-    });
-});
-
 document.getElementById('viewResultsBtn').addEventListener('click', () => {
     const msg = document.getElementById('viewResult');
+    // msg.innerHTML='';
 
     toggleOutput(msg, async () => {
         try {
-            let output = 'Results : \n';
-            let results = vs.getResults();
+            const { tally, winner, maxVotes } = vs.getResults();
+            
+            msg.innerHTML = '';  // clear previous output
 
-            results.forEach((count, candidateId) => {
-                output += `Candidate ${candidateId}: ${count} Votes\n`;
+            let output = 'Results:\n';
+            tally.forEach((count, candidateId) => {
+                const candidate = vs.candidates.find(c => c.id === candidateId);
+                output += `${candidate.name}: ${count} votes\n`;
             });
+            msg.innerText = output;  // set plain text results first
 
-            msg.innerText = output;
+            // then append winner as styled element
+            const win = document.createElement('span');
+            win.textContent = `🏆 Winner: ${winner.name} with ${maxVotes} votes`;
+            win.className = 'winnershow';
+            win.style.color ='var(--accent)';
+            msg.appendChild(win);
+
         } catch (e) {
             msg.innerText = e.message;
         }
     });
 });
+
+document.getElementById('viewResultsVoterBtn').addEventListener('click', () => {
+    const msg = document.getElementById('viewResultVoterMsg');
+    toggleOutput(msg, async () => {
+        try {
+            const { tally, winner, maxVotes } = vs.getResults();
+            
+            msg.innerHTML = '';  // clear previous output
+
+            let output = 'Results:\n';
+            tally.forEach((count, candidateId) => {
+                const candidate = vs.candidates.find(c => c.id === candidateId);
+                output += `${candidate.name}: ${count} votes\n`;
+            });
+            msg.innerText = output;  // set plain text results first
+
+            // then append winner as styled element
+            const win = document.createElement('span');
+            win.textContent = `🏆 Winner: ${winner.name} with ${maxVotes} votes`;
+            win.className = 'winnershow';
+            msg.appendChild(win);
+
+        } catch (e) {
+            msg.innerText = e.message;
+        }
+    });
+});
+
 
 document.getElementById('viewBlockchainBtn').addEventListener('click', () => {
     const container = document.getElementById('blockchainView');
@@ -450,11 +474,11 @@ function renderRemoveCandidateList() {
 
         const btn = document.createElement('button');
         btn.textContent = 'Remove';
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click',async () => {
             const pw = prompt('Enter admin password to confirm removal:');
             if (pw === null) return;
             try {
-                vs.removeCandidate(c.id, pw);
+                await vs.removeCandidate(c.id, pw);
                 controlmsg.textContent = `Candidate ${c.id} removed.`;
                 renderRemoveCandidateList(); // refresh list
             } catch (e) {
@@ -468,7 +492,7 @@ function renderRemoveCandidateList() {
     });
 }
 
-document.getElementById('removeCandidate').addEventListener('click', () => {
+document.getElementById('removeCandidate').addEventListener('click',async () => {
     toggleOutput(document.getElementById('removeCandidateList'), renderRemoveCandidateList);
 });
 
@@ -486,11 +510,11 @@ function renderRemoveVoterList() {
 
             const btn = document.createElement('button');
             btn.textContent = 'Remove';
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click',async () => {
                 const pw = prompt('Enter admin password to confirm removal:');
                 if (pw === null) return;
                 try {
-                    vs.removeVoter(v.id, pw);
+                    await vs.removeVoter(v.id, pw);
                     controlmsg.textContent = `Voter ${v.id} removed.`;
                     renderRemoveVoterList();
                 } catch (e) {
@@ -504,6 +528,6 @@ function renderRemoveVoterList() {
         });
 }
 
-document.getElementById('removeVoter').addEventListener('click', () => {
+document.getElementById('removeVoter').addEventListener('click',async () => {
     toggleOutput(document.getElementById('removeList'), renderRemoveVoterList);
 });
