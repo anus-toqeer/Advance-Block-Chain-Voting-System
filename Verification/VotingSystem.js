@@ -1,8 +1,8 @@
-import { BlockChain } from './blockChain.js';
-import { Block } from './block.js';
-import { hashPassword } from './hash.js';
-import { User, Admin, Voter } from './User.js';
-import { Candidate } from './candidate.js';
+import { BlockChain } from '../Classes/blockChain.js';
+import { Block } from '../Classes/block.js';
+import { hashPassword } from '../Utils/hash.js';
+import { User, Admin, Voter } from '../Classes/User.js';
+import { Candidate } from '../Classes/candidate.js';
 import { AuditLog } from './audit.js';
 
 export class VotingSystem {
