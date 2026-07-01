@@ -1,5 +1,6 @@
 import { BlockChain } from './blockChain.js';
 import { Block } from './block.js';
+import { hashPassword } from './hash.js';
 import { User, Admin, Voter } from './User.js';
 import { Candidate } from './candidate.js';
 import { AuditLog } from './audit.js';
@@ -18,23 +19,25 @@ export class VotingSystem {
     }
     // Basic Utilities Functions
     async init() {
-        const restored = this.loadState();
-        if (!restored) {
-            await this.blockchain.AddGenesisBlock();
-            this.users.set('Anas', new Admin('Anas', 'Anas', '1122'));
-            this.saveState();
-        }
+    const restored = this.loadState();
+    if (!restored) {
+        await this.blockchain.AddGenesisBlock();
+        const adminHash = await hashPassword('1122');   // ← hash admin password too
+        this.users.set('Anas', new Admin('Anas', 'Anas', adminHash));
+        this.saveState();
     }
-    registerVoter(id, name, password) {
-        if (this.electionStarted && this.electionOpen)
-            throw new Error('Cannot register voters while voting is in progress.');
-        if (this.users.has(id)) throw new Error("Voter ID already exists.");
-        if (!this.isValidName(name)) throw new Error("Invalid Name");
-        const voter = new Voter(id, name, password);
-        this.users.set(id, voter);
-        this.auditing.record(id, `Voter ${name} Registered`);
-        return voter;
-    }
+}
+   async registerVoter(id, name, password) {
+    if (this.electionStarted && this.electionOpen)
+        throw new Error('Cannot register voters while voting is in progress.');
+    if (this.users.has(id)) throw new Error("Voter ID already exists.");
+    if (!this.isValidName(name)) throw new Error("Invalid Name");
+    const hashed = await hashPassword(password);   // ← hash here
+    const voter = new Voter(id, name, hashed);      // ← store hash, not plaintext
+    this.users.set(id, voter);
+    this.auditing.record(id, `Voter ${name} Registered`);
+    return voter;
+}
     addcandidate(id, name) {
         if (this.electionStarted && this.electionOpen)
             throw new Error('Cannot add candidates while voting is in progress.');
@@ -43,36 +46,37 @@ export class VotingSystem {
         this.candidates.push(new Candidate(id, name));
         this.auditing.record(id, `Candidate ${name} Added`)
     }
-    loginVulnerable(id, password) {
-        let match;
-        try {
-            match = [...this.users.values()].find(u =>
-                eval(`u.id === "${id}" && u.password === "${password}"`)
-            );
-        } catch (e) {
-            match = undefined;
-        }
-
-        // If eval() itself was hijacked into bypassing auth entirely
-        // (e.g. id = `" || true || "`), match might be the first user
-        // even without real credentials — that's fine, it's the bypass.
-
-        // Explicit classic injection pattern also triggers a full "breach" dump
-        if (id.includes("' OR '1'='1") || id.includes('" OR "1"="1') || id.includes("|| true ||")) {
-            this.auditing.record('UNKNOWN', 'SIMULATED SQL INJECTION — auth bypassed');
-            return this.dumpDatabase();
-        }
-
-        if (!match) {
-            this.auditing.record(id, 'Login Failed(Not-secure)');
-            throw new Error('Invalid ID or password.');
-        }
-
-        this.currentUser = match;
-        this.auditing.record(match.id, 'Login Successful(Not-Secure)');
-        return match;
+    async loginVulnerable(id, password) {
+    const hashedPassword = await hashPassword(password);
+    let match;
+    try {
+        match = [...this.users.values()].find(u =>
+            eval(`u.id === "${id}" && u.password === "${hashedPassword}"`)
+        );
+    } catch (e) {
+        match = undefined;
     }
 
+    if (id.includes("' OR '1'='1") || id.includes('" OR "1"="1') || id.includes("|| true ||")) {
+        this.auditing.record('UNKNOWN', 'SIMULATED SQL INJECTION — auth bypassed');
+        return this.dumpDatabase();
+    }
+
+    // ← specific errors — information leakage vulnerability
+    const userExists = this.users.get(id);
+    if (!userExists) {
+        this.auditing.record(id, 'Login Failed - User Not Found(Not-secure)');
+        throw new Error(`User '${id}' does not exist.`);
+    }
+    if (!match) {
+        this.auditing.record(id, 'Login Failed - Wrong Password(Not-secure)');
+        throw new Error(`Incorrect password for user '${id}'.`);
+    }
+
+    this.currentUser = match;
+    this.auditing.record(match.id, 'Login Successful(Not-Secure)');
+    return match;
+}
     dumpDatabase() {
         return {
             breached: true,
@@ -80,22 +84,23 @@ export class VotingSystem {
             candidates: this.candidates
         };
     }
-    login(id, password) {
-        const user = this.users.get(id);
-        if (!user) throw new Error("Invalid Id or Password");
-        if (user.isLocked()) throw new Error('Account locked due to too many failed attempts.');
+    async login(id, password) {
+    const user = this.users.get(id);
+    if (!user) throw new Error("Invalid Id or Password");
+    if (user.isLocked()) throw new Error('Account locked due to too many failed attempts.');
 
-        if (password !== user.password) {
-            user.incrementFailedAttempts();
-            this.auditing.record(id, "Login Failed");   // now actually runs
-            throw new Error('Invalid ID or password.');
-        }
-
-        user.resetFailedAttempts();
-        this.currentUser = user;
-        this.auditing.record(id, "Login Successful(Secure)");
-        return user;
+    const hashed = await hashPassword(password);   // ← hash entered password
+    if (hashed !== user.password) {                // ← compare hash to hash
+        user.incrementFailedAttempts();
+        this.auditing.record(id, "Login Failed");
+        throw new Error('Invalid ID or password.');
     }
+
+    user.resetFailedAttempts();
+    this.currentUser = user;
+    this.auditing.record(id, "Login Successful(Secure)");
+    return user;
+}
     isValidName(name) {
         if (this.securityEnabled) {
             if (typeof name !== 'string') return false;
@@ -106,16 +111,17 @@ export class VotingSystem {
         }
         return true;
     }
-    changePassword(oldPassword, newPassword) {
-        if (!this.currentUser) throw new Error('You must be logged in.');
-        if (this.currentUser.password !== oldPassword) throw new Error('Current password is incorrect.');
-        if (newPassword === oldPassword) throw new Error('New password must be different.');
-        if (newPassword.length < 4) throw new Error('Password too short.');
+    async changePassword(oldPassword, newPassword) {
+    if (!this.currentUser) throw new Error('You must be logged in.');
+    const hashedOld = await hashPassword(oldPassword);
+    if (this.currentUser.password !== hashedOld) throw new Error('Current password is incorrect.');
+    if (newPassword === oldPassword) throw new Error('New password must be different.');
+    if (newPassword.length < 4) throw new Error('Password too short.');
 
-        this.currentUser.password = newPassword;
-        this.auditing.record(this.currentUser.id, 'Password Changed');
-        this.saveState();
-    }
+    this.currentUser.password = await hashPassword(newPassword);
+    this.auditing.record(this.currentUser.id, 'Password Changed');
+    this.saveState();
+}
     startElection() {
         if (!(this.currentUser instanceof Admin)) throw new Error('Only admin can start the election.');
         this.electionStarted = true;
@@ -181,7 +187,8 @@ export class VotingSystem {
         this.currentUser = null;
 
         await this.blockchain.AddGenesisBlock();
-        this.users.set('Anas', new Admin('Anas', 'Anas', '1122'));
+       const adminHash = await hashPassword('1122');   // ← hash admin password too
+        this.users.set('Anas', new Admin('Anas', 'Anas', adminHash));
         this.saveState();
     }
     renderCandidates(container) {

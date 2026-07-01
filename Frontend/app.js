@@ -99,15 +99,15 @@ function updateElectionStatus() {
 document.getElementById('logoutBtnVoter').addEventListener('click', logoutToVoterLogin);
 document.getElementById('logoutBtnAdmin').addEventListener('click', logoutToAdminLogin);
 
-document.getElementById('loginBtn').addEventListener('click', () => {
+document.getElementById('loginBtn').addEventListener('click', async () => {
     const id = document.getElementById('loginId').value;
     const password = document.getElementById('loginPassword').value;
     loginError.innerHTML = '';
 
     try {
         const result = vs.securityEnabled
-            ? vs.login(id, password)
-            : vs.loginVulnerable(id, password);
+            ? await vs.login(id, password)
+            : await vs.loginVulnerable(id, password);
 
         if (result.breached) {
             let dump = '🚨 INJECTION SUCCESSFUL — Database exposed:\n\n';
@@ -140,19 +140,21 @@ document.getElementById('loginBtn').addEventListener('click', () => {
         if (vs.securityEnabled) {
             loginError.textContent = e.message; // safe — plain text
         } else {
-            loginError.innerHTML = `Login failed for user: ${id}`; // vulnerable — raw HTML injection
+            loginError.innerHTML = e.message; // vulnerable — raw HTML injection
         }
     }
 });
 
-document.getElementById('adminLoginBtn').addEventListener('click', () => {
+document.getElementById('adminLoginBtn').addEventListener('click',async () => {
     const id = document.getElementById('adminLoginId').value;
     const password = document.getElementById('adminLoginPassword').value;
 
     try {
         const user = vs.securityEnabled
-            ? vs.login(id, password)
-            : vs.loginVulnerable(id, password);
+            ? await vs.login(id, password)
+            : await vs.loginVulnerable(id, password);
+            console.log(user);              // ← add this
+            console.log(user instanceof Admin);
 
         if (user instanceof Admin) {
             loginSection.style.display = 'none';
@@ -172,7 +174,7 @@ document.getElementById('adminLoginBtn').addEventListener('click', () => {
             document.getElementById('adminLoginError').textContent = e.message; // safe — plain text
             loginError.textContent = '';
         } else {
-            document.getElementById('adminLoginError').innerHTML = `Login failed for user: ${id}`;
+            document.getElementById('adminLoginError').innerHTML = e.message;
             loginError.innerHTML = ''; // vulnerable — raw HTML injection
         }
     }
