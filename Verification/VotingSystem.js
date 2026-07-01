@@ -187,7 +187,7 @@ export class VotingSystem {
         this.currentUser = null;
 
         await this.blockchain.AddGenesisBlock();
-       const adminHash = await hashPassword('1122');   // ← hash admin password too
+        const adminHash = await hashPassword('1122');   // ← hash admin password too
         this.users.set('Anas', new Admin('Anas', 'Anas', adminHash));
         this.saveState();
     }
@@ -222,15 +222,27 @@ export class VotingSystem {
         });
     }
 
-    getResults() {
-        if (this.electionOpen && !(this.currentUser instanceof Admin)) throw new Error('Results are not available until the election closes.');
-        const tally = new Map();
-        this.candidates.forEach(c => tally.set(c.id, 0));
-        this.blockchain.toArray().forEach(block => {
-            if (tally.has(block.candidateId)) tally.set(block.candidateId, tally.get(block.candidateId) + 1);
-        });
-        return tally;
-    }
+   getResults() {
+    if (this.electionOpen && !(this.currentUser instanceof Admin)) 
+        throw new Error('Results are not available until the election closes.');
+    
+    // Build tally map — candidateId → vote count
+    const tally = new Map();
+    this.candidates.forEach(c => tally.set(c.id, 0));
+    this.blockchain.toArray().forEach(block => {
+        if (tally.has(block.candidateId)) 
+            tally.set(block.candidateId, tally.get(block.candidateId) + 1);
+    });
+
+    // Find highest vote count
+    const maxVotes = Math.max(...tally.values());
+
+    // Find candidate whose id has that vote count
+    const winnerId = [...tally.entries()].find(([id, votes]) => votes === maxVotes)?.[0];
+    const winner = this.candidates.find(c => c.id === winnerId);
+
+    return { tally, winner, maxVotes };
+}
 
     saveState() {
         const usersData = [];
@@ -300,18 +312,20 @@ export class VotingSystem {
     }
 
 
-    removeVoter(id, adminPassword) {
+    async removeVoter(id, adminPassword) {
         if (!(this.currentUser instanceof Admin)) throw new Error('Only admin can remove voters.');
-        if (this.currentUser.password !== adminPassword) throw new Error('Incorrect admin password.');
+        const adminhash = await hashPassword(adminPassword);
+        if (this.currentUser.password !== adminhash) throw new Error('Incorrect admin password.');
         if (!this.users.has(id)) throw new Error('Voter not found.');
         this.users.delete(id);
         this.auditing.record(this.currentUser.id, `Removed voter ${id}`);
         this.saveState();
     }
 
-    removeCandidate(id, adminPassword) {
+    async removeCandidate(id, adminPassword) {
         if (!(this.currentUser instanceof Admin)) throw new Error('Only admin can remove candidates.');
-        if (this.currentUser.password !== adminPassword) throw new Error('Incorrect admin password.');
+        const adminhash = await hashPassword(adminPassword);
+        if (this.currentUser.password !== adminhash) throw new Error('Incorrect admin password.');
         const index = this.candidates.findIndex(c => c.id === id);
         if (index === -1) throw new Error('Candidate not found.');
         this.candidates.splice(index, 1);
